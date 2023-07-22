@@ -25,9 +25,12 @@ token_count = TokenCount()
 model = Model()
 
 def count_tokens(text):
-    tokens = list(tokenizer.tokenize(text))
-    return token_count.count(tokens, model=model)
-
+    try:
+        tokens = list(tokenizer.tokenize(text))
+        return token_count.count(tokens, model=model)
+    except Exception as e:
+        logging.error(f"An error occurred while counting tokens: {e}")
+        return None
 
 def get_transcript(video_id):
     try:
@@ -54,7 +57,7 @@ def analyze_transcript(transcript):
         return response['choices'][0]['message']['content'].strip(), token_count
     except Exception as e:
         logging.error(f"An error occurred while analyzing the transcript: {e}")
-        return None
+        return None, None
 
 def get_videos_from_channel(channel_id):
     try:
@@ -91,15 +94,10 @@ def get_videos_from_channel(channel_id):
                 })
         return video_data
     except Exception as e:
-        print(f"An error occurred while getting videos from the channel: {e}")
+        logging.error(f"An error occurred while getting videos from the channel: {e}")
         return []
 
 channel_ids = ["UCNJ1Ymd5yFuUPtn21xtRbbw","UCvKRFNawVcuz4b9ihUTApCg"]  # Replace with your list of channel IDs
-# need to add to the channel list, by going to each channel page -> right click -> view page source -> then search channelid
-# should probably add feature to check video titles to see if I already have the data
-# this is a costly script, so I should also split the openai calls out of this particular script, and batch summarize at a different time
-# should chunk the transcripts before giving to GPT4, and I should expand the prompt to where I get a more thorough response.
-
 
 for channel_id in channel_ids:
     try:
@@ -110,14 +108,15 @@ for channel_id in channel_ids:
             if transcript:
                 is_processed = True
                 transcript_cache = transcript
-                analysis = analyze_transcript(transcript)
+                analysis, token_count = analyze_transcript(transcript)
                 api_calls += 1
                 last_api_call = datetime.datetime.now()
                 try:
                     insert_data(connection, video_info, transcript, analysis, is_processed, token_count, api_calls, last_api_call, transcript_cache)
                 except Exception as e:
-                    print(f"An error occurred while inserting data into the database: {e}")
+                    logging.error(f"An error occurred while inserting data into the database: {e}")
                     with open('failed_inserts.txt', 'a') as f:
                         f.write(f"Video Info: {video_info}\nTranscript: {transcript}\nAnalysis: {analysis}\n\n")
     except Exception as e:
-        print(f"An error occurred while processing channel {channel_id}: {e}")
+        logging.error(f"An error occurred while processing channel {channel_id}: {e}")
+
