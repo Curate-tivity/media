@@ -1,10 +1,13 @@
 import pyodbc
 import logging
+from utils.config import get_config
 
 def create_connection():
-    server = 'server'
-    database = 'database'
-    driver= '{ODBC Driver 17 for SQL Server}'
+    config = get_config()
+    server = config.get_db_server()
+    database = config.get_db_name()
+    driver = config.get_db_driver()
+
     try:
         connection = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes;')
         return connection

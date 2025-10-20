@@ -6,6 +6,7 @@ import os
 from dotenv import load_dotenv
 import datetime
 from utils.sql import create_connection, insert_data
+from utils.config import get_config
 from tiktoken import Tokenizer, TokenCount
 from tiktoken.models import Model
 
@@ -16,6 +17,9 @@ logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 youtube_api_key = os.getenv('YOUTUBE_API_KEY')
+
+# Load configuration
+config = get_config()
 
 connection = create_connection()
 
@@ -43,16 +47,20 @@ def get_transcript(video_id):
 
 def analyze_transcript(transcript):
     try:
+        system_prompt = config.get_system_prompt()
+        user_prompt_template = config.get_user_prompt_template()
+        user_prompt = user_prompt_template.format(transcript=transcript)
+
         messages = [
-            {"role": "system", "content": "You are an AI capable of summarizing YouTube video content based on its transcript. A clear and concise summary can provide a quick understanding of the video's content."},
-            {"role": "user", "content": f"Generate a concise summary of the YouTube video using this transcript: {transcript}."},
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ]
         token_count = count_tokens(str(messages))
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-16k",
+            model=config.get_model(),
             messages=messages,
-            temperature=0,
+            temperature=config.get_temperature(),
         )
         return response['choices'][0]['message']['content'].strip(), token_count
     except Exception as e:
@@ -61,7 +69,8 @@ def analyze_transcript(transcript):
 
 def get_videos_from_channel(channel_id):
     try:
-        url = f"https://www.googleapis.com/youtube/v3/search?key={os.getenv('YOUTUBE_API_KEY')}&channelId={channel_id}&part=snippet,id&order=date&maxResults=20"
+        max_results = config.get_max_results()
+        url = f"https://www.googleapis.com/youtube/v3/search?key={os.getenv('YOUTUBE_API_KEY')}&channelId={channel_id}&part=snippet,id&order=date&maxResults={max_results}"
         response = requests.get(url)
         response.raise_for_status()
         video_data = []
@@ -97,7 +106,14 @@ def get_videos_from_channel(channel_id):
         logging.error(f"An error occurred while getting videos from the channel: {e}")
         return []
 
-channel_ids = ["UCNJ1Ymd5yFuUPtn21xtRbbw","UCvKRFNawVcuz4b9ihUTApCg"]  # Replace with your list of channel IDs
+# Get enabled channels from configuration
+channel_ids = config.get_channel_ids(enabled_only=True)
+
+if not channel_ids:
+    logging.error("No enabled channels found in configuration. Please add channels using manage_channels.py")
+    exit(1)
+
+print(f"Processing {len(channel_ids)} enabled channel(s)...")
 
 for channel_id in channel_ids:
     try:
