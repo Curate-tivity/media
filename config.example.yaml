@@ -1,0 +1,51 @@
+# Content Generator 3000 Configuration File
+# Copy this file to config.yaml and customize for your setup
+
+# YouTube API Settings
+youtube:
+  # Maximum number of videos to fetch per channel
+  max_results: 20
+
+# OpenAI API Settings
+openai:
+  # Model to use for summarization
+  # Options: gpt-4, gpt-4-turbo, gpt-3.5-turbo-16k, etc.
+  model: gpt-3.5-turbo-16k
+
+  # Temperature for generation (0 = deterministic, 1 = creative)
+  temperature: 0
+
+  # System prompt for AI summarization
+  system_prompt: "You are an AI capable of summarizing YouTube video content based on its transcript. A clear and concise summary can provide a quick understanding of the video's content."
+
+  # User prompt template - {transcript} will be replaced with actual transcript
+  user_prompt_template: "Generate a concise summary of the YouTube video using this transcript: {transcript}."
+
+# Database Settings
+database:
+  # SQL Server hostname or IP
+  server: server
+
+  # Database name
+  database: database
+
+  # ODBC driver (typically ODBC Driver 17 or 18 for SQL Server)
+  driver: "{ODBC Driver 17 for SQL Server}"
+
+# YouTube Channels to Monitor
+# Add or remove channels as needed
+channels:
+  # Example channel 1
+  - id: UCNJ1Ymd5yFuUPtn21xtRbbw
+    name: "AI News Channel 1"
+    enabled: true
+
+  # Example channel 2
+  - id: UCvKRFNawVcuz4b9ihUTApCg
+    name: "AI News Channel 2"
+    enabled: true
+
+  # Add more channels below:
+  # - id: YOUR_CHANNEL_ID_HERE
+  #   name: "Channel Name"
+  #   enabled: true

@@ -1,0 +1,22 @@
+# Content Generator 3000 - Python Dependencies
+
+# YouTube API
+youtube-transcript-api
+
+# OpenAI API
+openai
+
+# Token counting for OpenAI
+tiktoken
+
+# HTTP requests
+requests
+
+# Environment variables
+python-dotenv
+
+# Database
+pyodbc
+
+# Configuration management
+pyyaml
